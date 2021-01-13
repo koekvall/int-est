@@ -37,7 +37,7 @@ dat2 <-  t(sapply(lam_vals, function(x)get_statistics(y2, x)))
 # Create figure
 cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-if(PDF) pdf(paste(out_dir, "fig_1.pdf", sep = ""), width = 6, height = 4)
+if(PDF) pdf(paste(out_dir, "fig_loglik.pdf", sep = ""), width = 6, height = 4)
 par(cex.axis = 1.1, cex.lab = 1.1, cex = 1.1)
 par(mgp=c(2.2,0.45,0), tcl=-0.4, mar=c(3.3,3.6,1.5,1.1))
 
@@ -51,8 +51,8 @@ lines(lam_vals, dat2[, "ll"], type = "l", lwd = 2, lty = 1,
 
 if(PDF) dev.off()
 
-### Simulation Figures ####
-sim_data <- readRDS("~/GitHub/int-est/sims/sims_big.Rds")
+### Cover figures ####
+sim_data <- readRDS("~/GitHub/int-est/sims/sims_cover.Rds")
 n_sims <- nrow(sim_data[[1]])
 # Verify this using names(sim_data)
 gamma <- c(0, 0.01, 0.05, seq(0.1, 0.5, length.out = 5))
@@ -72,7 +72,7 @@ cover[, 8] <- rep(gamma, length(n_vec))
 colnames(cover) <- c("our", "lrt", "wald", "se_our", "se_lrt", "se_wald",
                      "n", "gamma")
 
-if(PDF) pdf(paste(out_dir, "fig_2.pdf", sep = ""), width = 10, height = 4)
+if(PDF) pdf(paste(out_dir, "fig_cover.pdf", sep = ""), width = 10, height = 4)
 par(cex.axis = 1.1, cex.lab = 1.1, cex = 1.1)
 par(mgp=c(2.2,0.45,0), tcl=-0.4, mar=c(3.3,3.6,1.5,1.1))
 par(mfrow = c(1, 2))
@@ -86,7 +86,7 @@ for(jj in c(20, 80)){
        lwd = 2,
        ylab = "estimated cover probability",
        xlab = expression(lambda),
-       main = paste0("n = ", jj),
+       main = paste0("N = ", jj),
        col = cbbPalette[1])
   arrows(gamma,
          plot_dat[, "our"],
@@ -145,7 +145,7 @@ for(jj in c(20, 80)){
 if(PDF) dev.off()
 # Distribution
 pp <- ppoints(n_sims)
-if(PDF) pdf(paste(out_dir, "fig_3.pdf", sep = ""), width = 10, height = 4)
+if(PDF) pdf(paste(out_dir, "fig_qq.pdf", sep = ""), width = 10, height = 4)
 par(cex.axis = 1.1, cex.lab = 1.1, cex = 1.1)
 par(mgp=c(2.2,0.45,0), tcl=-0.4, mar=c(3.3,3.6,1.5,1.1))
 par(mfrow = c(1, 2))
@@ -156,7 +156,7 @@ plot(x = qchisq(pp, df = 3),
      y = quantile(plot_dat[, "chi_sq"], pp),
      xlab = "theoretical quantiles",
      ylab = "sample quantiles",
-     main = "small scale parameters",
+     main = bquote(~ lambda == 0.01),
      col = cbbPalette[1])
 points(x = qchisq(pp, df = 3),
        y = quantile(plot_dat[, "lrt_chi_sq"], pp),
@@ -174,7 +174,7 @@ plot(x = qchisq(pp, df = 3),
      y = quantile(plot_dat[, "chi_sq"], pp),
      xlab = "theoretical quantiles",
      ylab = "sample quantiles",
-     main = "large scale parameters",
+     main = bquote(~ lambda == 0.5),
      col = cbbPalette[1])
 points(x = qchisq(pp, df = 3),
        y = quantile(plot_dat[, "lrt_chi_sq"], pp),
@@ -185,4 +185,97 @@ points(x = qchisq(pp, df = 3),
        pch = 3,
        col = cbbPalette[3])
 abline(a = 0, b = 1, col = "red")
+if(PDF) dev.off()
+
+### Power figures ####
+sim_data <- readRDS("~/GitHub/int-est/sims/sims_power.Rds")
+n_sims <- nrow(sim_data[[1]])
+# Verify this using names(sim_data)
+gamma <- c(0, 0.01, 0.05, seq(0.1, 0.5, length.out = 5))
+n_vec <- c(20, 40, 80)
+
+# Power curves
+power <- matrix(0, nrow = length(sim_data), ncol = 8)
+for(ii in 1:nrow(cover)){
+  power[ii, 1:3] <- colMeans(sim_data[[ii]][, c("p_val", "lrt_p_val",
+                                                    "wald_p_val")] < 0.05)
+  power[ii, 4:6] <- apply(sim_data[[ii]][, c("p_val", "lrt_p_val",
+                                             "wald_p_val")] < 0.05,
+                          2, sd) / sqrt(n_sims)
+}
+power[, 7] <- rep(n_vec, each = length(gamma))
+power[, 8] <- rep(gamma, length(n_vec))
+colnames(power) <- c("our", "lrt", "wald", "se_our", "se_lrt", "se_wald",
+                     "n", "gamma")
+
+if(PDF) pdf(paste(out_dir, "fig_power.pdf", sep = ""), width = 10, height = 4)
+par(cex.axis = 1.1, cex.lab = 1.1, cex = 1.1)
+par(mgp=c(2.2,0.45,0), tcl=-0.4, mar=c(3.3,3.6,1.5,1.1))
+par(mfrow = c(1, 2))
+
+for(jj in c(20, 80)){
+  plot_dat <- power[power[, "n"] == jj, ]
+  plot(x = gamma,
+       y = plot_dat[, "our"],
+       type = "l",
+       ylim = c(0, 1),
+       lwd = 2,
+       ylab = "estimated rejection probability",
+       xlab = expression(lambda),
+       main = paste0("N = ", jj),
+       col = cbbPalette[1])
+  arrows(gamma,
+         plot_dat[, "our"],
+         gamma,
+         plot_dat[, "our"] + 2 * plot_dat[, "se_our"],
+         length = 0.05,
+         angle = 90,
+         col = cbbPalette[1])
+  arrows(gamma,
+         plot_dat[, "our"],
+         gamma,
+         plot_dat[, "our"] - 2 * plot_dat[, "se_our"],
+         length = 0.05,
+         angle = 90,
+         col = cbbPalette[1])
+  abline(h = 0.05, lwd = 1)
+  lines(x = gamma,
+        y = plot_dat[, "lrt"],
+        lty = 2,
+        lwd = 2,
+        col = cbbPalette[2])
+  arrows(gamma,
+         plot_dat[, "lrt"],
+         gamma,
+         plot_dat[, "lrt"] + 2 * plot_dat[, "se_lrt"],
+         length = 0.05,
+         angle = 90,
+         col = cbbPalette[2])
+  arrows(gamma,
+         plot_dat[, "lrt"],
+         gamma,
+         plot_dat[, "lrt"] - 2 * plot_dat[, "se_lrt"],
+         length = 0.05,
+         angle = 90,
+         col = cbbPalette[2])
+  lines(x = gamma,
+        y = plot_dat[, "wald"],
+        lty = 3,
+        lwd = 2,
+        col = cbbPalette[3])
+  arrows(gamma,
+         plot_dat[, "wald"],
+         gamma,
+         plot_dat[, "wald"] + 2 * plot_dat[, "se_wald"],
+         length = 0.05,
+         angle = 90,
+         col = cbbPalette[3])
+  arrows(gamma,
+         plot_dat[, "wald"],
+         gamma,
+         plot_dat[, "wald"] - 2 * plot_dat[, "se_wald"],
+         length = 0.05,
+         angle = 90,
+         col = cbbPalette[3])
+}
 if(PDF) dev.off()
