@@ -1,8 +1,8 @@
-out_dir <- "/Users/karekv/Dropbox/Apps/Overleaf/int_est/" # end in "/"
+out_dir <- "/Users/karekv/Dropbox/Apps/Overleaf/conf_crit/" # end in "/"
 PDF <- TRUE
 
 
-### Introduction ###
+# Introduction ----------------------------------------------------------------
 get_statistics <- function(y, lam)
 {
   n <- length(y)
@@ -37,13 +37,13 @@ dat2 <-  t(sapply(lam_vals, function(x)get_statistics(y2, x)))
 # Create figure
 cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-if(PDF) pdf(paste(out_dir, "fig_loglik.pdf", sep = ""), width = 6, height = 4)
+if(PDF) pdf(paste(out_dir, "fig_loglik.pdf", sep = ""), width = 5, height = 3)
 par(cex.axis = 1.1, cex.lab = 1.1, cex = 1.1)
 par(mgp=c(2.2,0.45,0), tcl=-0.4, mar=c(3.3,3.6,1.5,1.1))
 
 # Likelihood
 plot(lam_vals, dat1[, "ll"], type = "l", lwd = 2,
-     ylab = "log-likelihood", xlab = expression(lambda) ,
+     ylab = "log-likelihood", xlab = expression(theta),
      ylim = c(min(dat2[, "ll"]), max(dat1[, "ll"])),
      col = cbbPalette[1])
 lines(lam_vals, dat2[, "ll"], type = "l", lwd = 2, lty = 1,
@@ -51,9 +51,10 @@ lines(lam_vals, dat2[, "ll"], type = "l", lwd = 2, lty = 1,
 
 if(PDF) dev.off()
 
-### Cover figures ####
+# Simulations -----------------------------------------------------------------
 sim_data <- readRDS("~/GitHub/int-est/sims/sims_cover.Rds")
 n_sims <- nrow(sim_data[[1]])
+
 # Verify this using names(sim_data)
 gamma <- c(0, 0.01, 0.05, seq(0.1, 0.5, length.out = 5))
 n_vec <- c(20, 40, 80)
@@ -72,8 +73,8 @@ cover[, 8] <- rep(gamma, length(n_vec))
 colnames(cover) <- c("our", "lrt", "wald", "se_our", "se_lrt", "se_wald",
                      "n", "gamma")
 
-if(PDF) pdf(paste(out_dir, "fig_cover.pdf", sep = ""), width = 10, height = 4)
-par(cex.axis = 1.1, cex.lab = 1.1, cex = 1.1)
+if(PDF) pdf(paste(out_dir, "fig_cover.pdf", sep = ""), width = 8, height = 3)
+par(cex.axis = 1.3, cex.lab = 1.3, cex = 1.3)
 par(mgp=c(2.2,0.45,0), tcl=-0.4, mar=c(3.3,3.6,1.5,1.1))
 par(mfrow = c(1, 2))
 
@@ -82,7 +83,7 @@ for(jj in c(20, 80)){
   plot(x = gamma,
        y = plot_dat[, "our"],
        type = "l",
-       ylim = c(0.82, 1),
+       ylim = c(0.85, 1),
        lwd = 2,
        ylab = "estimated cover probability",
        xlab = expression(lambda),
@@ -143,10 +144,11 @@ for(jj in c(20, 80)){
          col = cbbPalette[3])
 }
 if(PDF) dev.off()
-# Distribution
+
+# QQ Plots
 pp <- ppoints(n_sims)
-if(PDF) pdf(paste(out_dir, "fig_qq.pdf", sep = ""), width = 10, height = 4)
-par(cex.axis = 1.1, cex.lab = 1.1, cex = 1.1)
+if(PDF) pdf(paste(out_dir, "fig_qq.pdf", sep = ""), width = 8, height = 3)
+par(cex.axis = 1.3, cex.lab = 1.3, cex = 1.3)
 par(mgp=c(2.2,0.45,0), tcl=-0.4, mar=c(3.3,3.6,1.5,1.1))
 par(mfrow = c(1, 2))
 
@@ -187,14 +189,14 @@ points(x = qchisq(pp, df = 3),
 abline(a = 0, b = 1, col = "red")
 if(PDF) dev.off()
 
-### Power figures ####
+# Power curves
 sim_data <- readRDS("~/GitHub/int-est/sims/sims_power.Rds")
 n_sims <- nrow(sim_data[[1]])
+
 # Verify this using names(sim_data)
 gamma <- c(0, 0.01, 0.05, seq(0.1, 0.5, length.out = 5))
 n_vec <- c(20, 40, 80)
 
-# Power curves
 power <- matrix(0, nrow = length(sim_data), ncol = 8)
 for(ii in 1:nrow(cover)){
   power[ii, 1:3] <- colMeans(sim_data[[ii]][, c("p_val", "lrt_p_val",
@@ -208,8 +210,8 @@ power[, 8] <- rep(gamma, length(n_vec))
 colnames(power) <- c("our", "lrt", "wald", "se_our", "se_lrt", "se_wald",
                      "n", "gamma")
 
-if(PDF) pdf(paste(out_dir, "fig_power.pdf", sep = ""), width = 10, height = 4)
-par(cex.axis = 1.1, cex.lab = 1.1, cex = 1.1)
+if(PDF) pdf(paste(out_dir, "fig_power.pdf", sep = ""), width = 8, height = 3)
+par(cex.axis = 1.3, cex.lab = 1.3, cex = 1.3)
 par(mgp=c(2.2,0.45,0), tcl=-0.4, mar=c(3.3,3.6,1.5,1.1))
 par(mfrow = c(1, 2))
 
@@ -279,3 +281,33 @@ for(jj in c(20, 80)){
          col = cbbPalette[3])
 }
 if(PDF) dev.off()
+
+# Data example ----------------------------------------------------------------
+ex_dat <- readRDS("~/GitHub/int-est/data_ex/data_ex.Rds")
+if(PDF) pdf(paste(out_dir, "fig_data_ex.pdf", sep = ""), width = 9, height = 3)
+par(cex.axis = 1.6, cex.lab = 1.6, cex = 1.6)
+par(mgp=c(3,1,0), tcl=-0.4, mar=c(4,5,1.5,1.1))
+par(mfrow = c(1, 3))
+
+# Confidence interval for first component
+plot(x = ex_dat[[1]], y = ex_dat[[4]], type = "l", xlab = bquote(~ lambda[1]),
+     ylab = "test statistic", ylim = c(0, 8))
+abline(h = qchisq(0.95, 1), lty = 2)
+
+plot(x = ex_dat[[2]], y = ex_dat[[5]], type = "l", xlab = bquote(~ lambda[2]),
+     ylab = "test statistic", ylim = c(0, 8))
+abline(h = qchisq(0.95, 1), lty = 2)
+
+contour(x = ex_dat[[1]],
+        y = ex_dat[[2]],
+        z = ex_dat[[6]],
+        nlevels = 2,
+        levels = c(0, round(qchisq(c(0.8, 0.9, 0.95, 0.99), df = 2), digits = 2)),
+        labels = c(0, 0.8, 0.9, 0.95, 0.99),
+        labcex = 1,
+        xlab = bquote(~ lambda[1]),
+        ylab = bquote(~ lambda[2]))
+#VC <- as.data.frame(lme4::VarCorr(ex_dat[[6]]))
+abline(v = VC[1, 5], lty = 2)
+abline(h = VC[2, 5], lty = 2)
+dev.off()
